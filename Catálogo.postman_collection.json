@@ -1,0 +1,96 @@
+{
+	"info": {
+		"_postman_id": "69538390-b978-40fc-a20c-d3b452ee30ae",
+		"name": "Catálogo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "45881720",
+		"_collection_link": "https://lidiane-4992681.postman.co/workspace/Catal%25C3%25B3go-de-Produtos~eac1a4a2-2662-4d57-a029-97e15b774d09/collection/45881720-69538390-b978-40fc-a20c-d3b452ee30ae?action=share&source=collection_link&creator=45881720"
+	},
+	"item": [
+		{
+			"name": "Inserir Produto",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"sku\": \"GATO002\",\r\n      \"nome\": \"Ração Sênior para Gatos\",\r\n      \"descricao\": \"Ração indicada para gatos acima de 7 anos\",\r\n      \"preco\": 95.50,\r\n      \"quantidade\": 30,\r\n      \"ativo\": true\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/produtos",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"produtos"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Buscar por consulta",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/produtos?precoMax=89.90",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"produtos"
+					],
+					"query": [
+						{
+							"key": "precoMax",
+							"value": "89.90"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Deletar produto por ID",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/produtos/7",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"produtos",
+						"7"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
