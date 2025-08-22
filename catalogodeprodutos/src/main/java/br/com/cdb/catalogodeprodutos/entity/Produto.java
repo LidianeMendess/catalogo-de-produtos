@@ -33,7 +33,7 @@ public class Produto {
     private BigDecimal preco;
 
     @Min(0)
-    private int quantidade;
+    private Integer quantidade;
     private Boolean ativo;
 
     @Column(name="criado_em", updatable=false)
@@ -58,8 +58,8 @@ public class Produto {
     public BigDecimal getPreco() { return preco; }
     public void setPreco(BigDecimal preco) { this.preco = preco; }
 
-    public int getQuantidade() { return quantidade; }
-    public void setQuantidade(int quantidade) { this.quantidade = quantidade; }
+    public Integer getQuantidade() { return quantidade; }
+    public void setQuantidade(Integer quantidade) { this.quantidade = quantidade; }
 
     public Boolean getAtivo() { return ativo; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }

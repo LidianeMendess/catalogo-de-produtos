@@ -22,7 +22,7 @@ public class ProdutoController {
     @PostMapping
     public ResponseEntity<String> inserirProduto(@Valid @RequestBody ProdutoDTO dto){
         Produto produtoAdicionado= produtoService.inserirProduto(dto);
-        return new ResponseEntity<>("Produto "+produtoAdicionado.getId()+" adicionado!", HttpStatus.CREATED);
+        return new ResponseEntity<>("Produto de ID "+produtoAdicionado.getId()+" adicionado!", HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")

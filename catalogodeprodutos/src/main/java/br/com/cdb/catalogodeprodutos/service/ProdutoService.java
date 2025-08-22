@@ -31,6 +31,9 @@ public class ProdutoService {
     }
 
     public Page<Produto> buscarComFiltros(Boolean ativo, String nome, Double precoMin, Double precoMax, Pageable pageable){
+        if(ativo==null){
+            ativo=true;
+        }
         return produtoRepository.buscarComFiltros(ativo, nome, precoMin, precoMax, pageable);
     }
 
