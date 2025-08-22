@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 
 public class ProdutoDTO {
 
-    private int id;
+    private Integer id;
 
     private String sku;
 
@@ -34,10 +34,16 @@ public class ProdutoDTO {
     public ProdutoDTO(){}
 
     public ProdutoDTO(Produto produto) {
-        BeanUtils.copyProperties(produto, this);
+        this.id = produto.getId();
+        this.sku = produto.getSku();
+        this.nome = produto.getNome();
+        this.descricao = produto.getDescricao();
+        this.preco = produto.getPreco();
+        this.quantidade = produto.getQuantidade();
+        this.ativo = produto.getAtivo();
     }
 
-    public int getId() { return id; }
+    public Integer getId() { return id; }
 
     public String getSku() { return sku; }
 
