@@ -16,12 +16,13 @@ public class Produto {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private int id;
 
-    @Column(unique=true, nullable = false)
+    @Column(unique=true, nullable = false, updatable = false)
     private String sku;
 
-    @Column
+
     @NotBlank
-    @Size(min=3, max=120)
+    @Size(min = 3, max = 120)
+    @Column(name = "nome", nullable = false, length = 120)
     private String nome;
 
     @Column(length = 255)
@@ -33,7 +34,7 @@ public class Produto {
 
     @Min(0)
     private int quantidade;
-    private boolean ativo;
+    private Boolean ativo;
 
     @Column(name="criado_em", updatable=false)
     private LocalDateTime criadoEm;
@@ -44,7 +45,6 @@ public class Produto {
     public Produto(){}
 
     public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
 
     public String getSku() { return sku; }
     public void setSku(String sku) { this.sku = sku; }
@@ -61,7 +61,7 @@ public class Produto {
     public int getQuantidade() { return quantidade; }
     public void setQuantidade(int quantidade) { this.quantidade = quantidade; }
 
-    public boolean isAtivo() { return ativo; }
+    public Boolean getAtivo() { return ativo; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }
 
     public LocalDateTime getCriadoEm() { return criadoEm; }

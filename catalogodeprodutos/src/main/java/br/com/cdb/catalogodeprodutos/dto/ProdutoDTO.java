@@ -1,9 +1,12 @@
 package br.com.cdb.catalogodeprodutos.dto;
 
+import br.com.cdb.catalogodeprodutos.entity.Produto;
+import com.fasterxml.jackson.databind.util.BeanUtil;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import org.springframework.beans.BeanUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -14,22 +17,25 @@ public class ProdutoDTO {
 
     private String sku;
 
-
     @NotBlank
     @Size(min=3, max=120)
     private String nome;
 
+    @Size(max=255)
     private String descricao;
 
     @DecimalMin("0.0")
     private BigDecimal preco;
 
     @Min(0)
-    private int quantidade;
-    private boolean ativo;
+    private Integer quantidade;
+    private Boolean ativo;
 
+    public ProdutoDTO(){}
 
-
+    public ProdutoDTO(Produto produto) {
+        BeanUtils.copyProperties(produto, this);
+    }
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -46,11 +52,11 @@ public class ProdutoDTO {
     public BigDecimal getPreco() { return preco; }
     public void setPreco(BigDecimal preco) { this.preco = preco; }
 
-    public int getQuantidade() { return quantidade; }
-    public void setQuantidade(int quantidade) { this.quantidade = quantidade; }
+    public Integer getQuantidade() { return quantidade; }
+    public void setQuantidade(Integer quantidade) { this.quantidade = quantidade; }
 
-    public boolean isAtivo() { return ativo; }
-    public void setAtivo(boolean ativo) { this.ativo = ativo; }
+    public Boolean getAtivo() { return ativo; }
+    public void setAtivo(Boolean ativo) { this.ativo = ativo; }
 
 
 }
