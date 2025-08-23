@@ -4,6 +4,7 @@ import br.com.cdb.catalogodeprodutos.core.domain.model.Produto;
 import br.com.cdb.catalogodeprodutos.port.input.ProdutoInputPort;
 import br.com.cdb.catalogodeprodutos.port.output.ProdutoOutputPort;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
