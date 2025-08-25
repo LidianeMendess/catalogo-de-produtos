@@ -1,7 +1,6 @@
 package br.com.cdb.catalogodeprodutos.adapter.output.impl;
 
 import br.com.cdb.catalogodeprodutos.core.domain.model.Produto;
-import br.com.cdb.catalogodeprodutos.port.output.ProdutoOutputPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;

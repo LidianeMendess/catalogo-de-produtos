@@ -1,4 +1,4 @@
-package br.com.cdb.catalogodeprodutos.core.usecase;
+package br.com.cdb.catalogodeprodutos.core.domain.usecase;
 
 import br.com.cdb.catalogodeprodutos.core.domain.model.Produto;
 import br.com.cdb.catalogodeprodutos.port.input.ProdutoInputPort;
