@@ -1,4 +1,4 @@
-package br.com.cdb.catalogodeprodutos.entity;
+package br.com.cdb.catalogodeprodutos.adapter.output.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-public class Produto {
+public class ProdutoEntity {
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -42,7 +42,7 @@ public class Produto {
     @Column(name="atualizado_em")
     private LocalDateTime atualizadoEm;
 
-    public Produto(){}
+    public ProdutoEntity(){}
 
     public Integer getId() { return id; }
 
