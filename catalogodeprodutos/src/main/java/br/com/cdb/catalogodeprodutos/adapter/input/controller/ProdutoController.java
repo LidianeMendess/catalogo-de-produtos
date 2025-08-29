@@ -6,11 +6,12 @@ import br.com.cdb.catalogodeprodutos.core.domain.model.Produto;
 import br.com.cdb.catalogodeprodutos.port.input.ProdutoInputPort;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/produtos")
@@ -37,14 +38,16 @@ public class ProdutoController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<Produto>> buscarPorFiltros(
+    public ResponseEntity<List<Produto>> buscarPorFiltros(
             @RequestParam(required = false) Boolean ativo,
             @RequestParam(required = false) String nome,
             @RequestParam(required = false) Double precoMin,
             @RequestParam(required = false) Double precoMax,
-            Pageable pageable) {
+            @RequestParam(defaultValue = "10") int limite,
+            @RequestParam(defaultValue = "0") int offset
+            ) {
 
-        Page<Produto> produtos = produtoInputPort.buscarComFiltros(ativo, nome, precoMin, precoMax, pageable);
+        List<Produto> produtos = produtoInputPort.buscarComFiltros(ativo, nome, precoMin, precoMax, limite, offset);
         return ResponseEntity.ok(produtos);
     }
 

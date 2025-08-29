@@ -2,16 +2,16 @@ package br.com.cdb.catalogodeprodutos.adapter.output.impl;
 
 import br.com.cdb.catalogodeprodutos.core.domain.model.Produto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,11 +25,15 @@ public class ProdutoRepositoryImpl implements ProdutoRepository {
         @Override
         public Produto mapRow(ResultSet rs, int rowNum) throws SQLException {
             Produto p = new Produto();
+            p.setId(rs.getInt("id"));
+            p.setSku(rs.getString("sku"));
             p.setNome(rs.getString("nome"));
             p.setDescricao(rs.getString("descricao"));
             p.setPreco(rs.getBigDecimal("preco"));
             p.setQuantidade(rs.getInt("quantidade"));
             p.setAtivo(rs.getBoolean("ativo"));
+            p.setCriadoEm(rs.getTimestamp("criado_em").toLocalDateTime());
+            p.setAtualizadoEm(rs.getTimestamp("atualizado_em").toLocalDateTime());
             return p;
         }
     };
@@ -37,7 +41,6 @@ public class ProdutoRepositoryImpl implements ProdutoRepository {
     @Override
     public Produto salvar(Produto produto) {
         if (produto.getId() == null || produto.getId() == 0) {
-            // INSERT
             jdbcTemplate.update(
                     "INSERT INTO produto (nome, descricao, preco, quantidade, ativo, criado_em, atualizado_em) VALUES (?, ?, ?, ?, ?, ?, ?)",
                     produto.getNome(),
@@ -49,7 +52,6 @@ public class ProdutoRepositoryImpl implements ProdutoRepository {
                     LocalDateTime.now()
             );
         } else {
-            // UPDATE
             jdbcTemplate.update(
                     "UPDATE produto SET nome = ?, descricao = ?, preco = ?, quantidade = ?, ativo = ?, atualizado_em = ? WHERE id = ?",
                     produto.getNome(),
@@ -74,26 +76,48 @@ public class ProdutoRepositoryImpl implements ProdutoRepository {
         return produtos.isEmpty() ? Optional.empty() : Optional.of(produtos.get(0));
     }
 
+
     @Override
-    public Page<Produto> buscarComFiltros(Boolean ativo, String nome, Double precoMin, Double precoMax, Pageable pageable) {
-        String sql = "SELECT * FROM produto WHERE 1=1 ";
-        if (ativo != null) sql += "AND ativo = " + ativo + " ";
-        if (nome != null && !nome.isEmpty()) sql += "AND LOWER(nome) LIKE LOWER('%" + nome + "%') ";
-        if (precoMin != null) sql += "AND preco >= " + precoMin + " ";
-        if (precoMax != null) sql += "AND preco <= " + precoMax + " ";
+    public List<Produto> buscarComFiltros(Boolean ativo, String nome, Double precoMin, Double precoMax, int limite, int offset) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM produto WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
 
-        List<Produto> produtos = jdbcTemplate.query(sql, produtoMapper);
+        if (ativo != null) {
+            sql.append("AND ativo = ? ");
+            params.add(ativo);
+        }
+        if (nome != null && !nome.isEmpty()) {
+            sql.append("AND LOWER(nome) LIKE ? ");
+            params.add("%" + nome.toLowerCase() + "%");
+        }
+        if (precoMin != null) {
+            sql.append("AND preco >= ? ");
+            params.add(precoMin);
+        }
+        if (precoMax != null) {
+            sql.append("AND preco <= ? ");
+            params.add(precoMax);
+        }
 
-        // Paginação manual simples
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), produtos.size());
-        List<Produto> pagedList = produtos.subList(start, end);
+        sql.append("LIMIT ? OFFSET ?");
+        params.add(limite);
+        params.add(offset);
 
-        return new PageImpl<>(pagedList, pageable, produtos.size());
+        return jdbcTemplate.query(sql.toString(), produtoMapper, params.toArray());
     }
 
     @Override
     public void deletarPorId(int id) {
         jdbcTemplate.update("DELETE FROM produto WHERE id = ?", id);
     }
+
+    @Override
+    public List<Produto> buscarTodos(int limite, int offset) {
+        String sql = "SELECT * FROM produto LIMIT ? OFFSET ?";
+        return jdbcTemplate.query(sql, produtoMapper, limite, offset);
+    }
+
 }
+
+
+

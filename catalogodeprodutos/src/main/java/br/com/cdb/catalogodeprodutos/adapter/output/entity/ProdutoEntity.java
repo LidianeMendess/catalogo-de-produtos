@@ -1,51 +1,25 @@
 package br.com.cdb.catalogodeprodutos.adapter.output.entity;
-
-import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity
+
 public class ProdutoEntity {
 
-    @Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Integer id;
-
-    @Column(unique=true, nullable = false, updatable = false)
     private String sku;
-
-
-    @NotBlank
-    @Size(min = 3, max = 120)
-    @Column(name = "nome", nullable = false, length = 120)
     private String nome;
-
-    @Column(length = 255)
     private String descricao;
-
-    @Column(precision=12, scale=2)
-    @DecimalMin("0.0")
     private BigDecimal preco;
-
-    @Min(0)
     private Integer quantidade;
     private Boolean ativo;
-
-    @Column(name="criado_em", updatable=false)
     private LocalDateTime criadoEm;
-
-    @Column(name="atualizado_em")
     private LocalDateTime atualizadoEm;
+
 
     public ProdutoEntity(){}
 
     public Integer getId() { return id; }
-
+    public void setId(Integer id) {this.id=id;}
     public String getSku() { return sku; }
     public void setSku(String sku) { this.sku = sku; }
 
@@ -70,16 +44,6 @@ public class ProdutoEntity {
     public LocalDateTime getAtualizadoEm() { return atualizadoEm; }
     public void setAtualizadoEm(LocalDateTime atualizadoEm) { this.atualizadoEm = atualizadoEm; }
 
-    @PrePersist
-    protected void datasCriacao(){
-        criadoEm= LocalDateTime.now();
-        atualizadoEm=LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void dataModificacao(){
-        atualizadoEm=LocalDateTime.now();
-    }
 
 
 }

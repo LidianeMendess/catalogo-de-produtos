@@ -31,7 +31,8 @@ public class Produto {
     }
 
 
-    public Integer getId() { return id; }
+        public Integer getId() { return id; }
+        public void setId(Integer id){this.id=id;}
 
         public String getSku() { return sku; }
         public void setSku(String sku) { this.sku = sku; }
