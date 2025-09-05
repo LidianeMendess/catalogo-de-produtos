@@ -2,7 +2,6 @@ package br.com.cdb.catalogodeprodutos.core.domain.model;
 
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 public class Produto {
 
@@ -13,12 +12,11 @@ public class Produto {
         private BigDecimal preco;
         private Integer quantidade;
         private Boolean ativo;
-        private LocalDateTime criadoEm;
-        private LocalDateTime atualizadoEm;
+
 
         public Produto(){}
 
-    public Produto(Integer id, String sku, String nome, String descricao, BigDecimal preco, Integer quantidade, Boolean ativo, LocalDateTime criadoEm, LocalDateTime atualizadoEm) {
+    public Produto(Integer id, String sku, String nome, String descricao, BigDecimal preco, Integer quantidade, Boolean ativo) {
         this.id = id;
         this.sku = sku;
         this.nome = nome;
@@ -26,8 +24,6 @@ public class Produto {
         this.preco = preco;
         this.quantidade = quantidade;
         this.ativo = ativo;
-        this.criadoEm = criadoEm;
-        this.atualizadoEm = atualizadoEm;
     }
 
 
@@ -51,13 +47,6 @@ public class Produto {
 
         public Boolean getAtivo() { return ativo; }
         public void setAtivo(boolean ativo) { this.ativo = ativo; }
-
-        public LocalDateTime getCriadoEm() { return criadoEm; }
-        public void setCriadoEm(LocalDateTime criadoEm) { this.criadoEm = criadoEm; }
-
-        public LocalDateTime getAtualizadoEm() { return atualizadoEm; }
-        public void setAtualizadoEm(LocalDateTime atualizadoEm) { this.atualizadoEm = atualizadoEm; }
-
 
     }
 
