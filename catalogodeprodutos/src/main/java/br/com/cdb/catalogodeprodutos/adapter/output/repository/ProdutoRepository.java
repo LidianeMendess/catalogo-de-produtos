@@ -1,7 +1,9 @@
 package br.com.cdb.catalogodeprodutos.adapter.output.repository;
 
+import br.com.cdb.catalogodeprodutos.adapter.output.entity.CategoriaEntity;
 import br.com.cdb.catalogodeprodutos.adapter.output.entity.ProdutoEntity;
 import br.com.cdb.catalogodeprodutos.adapter.output.mapper.ProdutoEntityMapper;
+import br.com.cdb.catalogodeprodutos.core.domain.model.Categoria;
 import br.com.cdb.catalogodeprodutos.core.domain.model.Produto;
 import br.com.cdb.catalogodeprodutos.port.output.ProdutoOutputPort;
 import lombok.extern.slf4j.Slf4j;
@@ -9,13 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Component;
 
-import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.sql.CallableStatement;
+import java.sql.Timestamp;
+import java.util.*;
 
 @Component
 @Slf4j
@@ -34,48 +34,56 @@ public class ProdutoRepository implements ProdutoOutputPort {
 
     @Override
     public Produto salvar(Produto produto) {
-        if (produto.getId() == null || produto.getId() == 0) {
-            log.info("Inserindo produto no banco: {}", produto.getNome());
+        log.info("Criando produto: {}", produto);
 
-            if (produto.getSku() == null || produto.getSku().isBlank()) {
-                log.error("SKU é obrigatório para o produto: {}", produto.getNome());
-                throw new IllegalArgumentException("SKU é obrigatório!");
-            }
-
-            GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-
-            jdbcTemplate.update(connection -> {
-                PreparedStatement ps = connection.prepareStatement(
-                        "INSERT INTO produto (nome, descricao, preco, quantidade, ativo, sku, criado_em, atualizado_em) VALUES (?, ?, ?, ?, ?, ?, now(), now())",
-                        new String[]{"id"}
-                );
-                ps.setString(1, produto.getNome());
-                ps.setString(2, produto.getDescricao());
-                ps.setBigDecimal(3, produto.getPreco());
-                ps.setInt(4, produto.getQuantidade() != null ? produto.getQuantidade() : 0);
-                ps.setBoolean(5, produto.getAtivo() != null ? produto.getAtivo() : true);
-                ps.setString(6, produto.getSku());
-                return ps;
-            }, keyHolder);
-
-            produto.setId(keyHolder.getKey().intValue());
-            log.info("Produto inserido com sucesso: {} (id={})", produto.getNome(), produto.getId());
-
-        } else {
-            log.info("Atualizando produto id={}",produto.getId());
-            jdbcTemplate.update(
-                    "UPDATE produto SET nome = ?, descricao = ?, preco = ?, quantidade = ?, ativo = ? WHERE id = ?",
-                    produto.getNome(),
-                    produto.getDescricao(),
-                    produto.getPreco(),
-                    produto.getQuantidade(),
-                    produto.getAtivo(),
-                    produto.getId()
+        jdbcTemplate.update(connection -> {
+            CallableStatement cs = connection.prepareCall(
+                    "CALL pr_criar_produto(?, ?, ?, ?, ?, ?, ?, ?, ?)"
             );
-            log.info("Produto atualizado com sucesso id={}", produto.getId());
-        }
+            cs.setObject(1, produto.getId(), java.sql.Types.INTEGER); // null se quiser que banco gere
+            cs.setString(2, produto.getSku());
+            cs.setString(3, produto.getNome());
+            cs.setString(4, produto.getDescricao());
+            cs.setBigDecimal(5, produto.getPreco());
+            cs.setObject(6, produto.getQuantidade(), java.sql.Types.INTEGER);
+            cs.setObject(7, produto.getAtivo(), java.sql.Types.BOOLEAN);
+            cs.setObject(8, produto.getCriadoEm(), java.sql.Types.TIMESTAMP);
+            cs.setObject(9, produto.getAtualizadoEm(), java.sql.Types.TIMESTAMP);
+            return cs;
+        });
+
         return produto;
     }
+
+
+    @Override
+    public Produto atualizarProduto(int id, Produto produtoAtualizado) {
+        log.info("Atualizando produto id={}", id);
+
+        jdbcTemplate.update(connection -> {
+            CallableStatement cs = connection.prepareCall(
+                    "CALL pr_atualizar_produtos(?::integer, ?::varchar, ?::varchar, ?::numeric, ?::integer, ?::boolean, ?::timestamp)"
+            );
+            cs.setInt(1, id);
+            cs.setString(2, produtoAtualizado.getNome());
+            cs.setString(3, produtoAtualizado.getDescricao());
+            cs.setBigDecimal(4, produtoAtualizado.getPreco());
+            cs.setObject(5, produtoAtualizado.getQuantidade(), java.sql.Types.INTEGER);
+            cs.setObject(6, produtoAtualizado.getAtivo(), java.sql.Types.BOOLEAN);
+            if (produtoAtualizado.getAtualizadoEm() != null) {
+                cs.setTimestamp(7, new Timestamp(produtoAtualizado.getAtualizadoEm().getTime()));
+            } else {
+                cs.setNull(7, java.sql.Types.TIMESTAMP);
+            }
+
+
+            return cs;
+        });
+
+        produtoAtualizado.setId(id);
+        return produtoAtualizado;
+    }
+
 
     @Override
     public Optional<Produto> buscarPorId(int id) {
@@ -87,50 +95,79 @@ public class ProdutoRepository implements ProdutoOutputPort {
                 : Optional.of(produtoEntityMapper.toDomain(entities.get(0)));
     }
 
+
     @Override
-    public List<Produto> buscarComFiltros(Boolean ativo, String nome, Double precoMin, Double precoMax, int limite, int offset) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM produto WHERE 1=1 ");
-        log.info("Buscando produtos com filtros: ativo={}, nome={}, precoMin={}, precoMax={}, limite={}, offset={}",
-                ativo, nome, precoMin, precoMax, limite, offset);
+    public List<Produto> buscarComFiltros(Boolean ativo, String nome, Double precoMin, Double precoMax, int limite, int offset, Categoria categoria) {
+        log.info("Buscando produtos com filtros: ativo={}, nome={}, precoMin={}, precoMax={}, categoria{}, limite={}, offset={}",
+                ativo, nome, precoMin, precoMax, categoria, limite, offset);
 
-        List<Object> params = new ArrayList<>();
+       String sql= "SELECT * FROM buscar_com_filtros_produtos(?, ?, ?, ?, ?, ?, ?)";
 
-        if (ativo != null) {
-            sql.append("AND ativo = ? ");
-            params.add(ativo);
-        }
-        if (nome != null && !nome.isEmpty()) {
-            sql.append("AND LOWER(nome) LIKE ? ");
-            params.add("%" + nome.toLowerCase() + "%");
-        }
-        if (precoMin != null) {
-            sql.append("AND preco >= ? ");
-            params.add(precoMin);
-        }
-        if (precoMax != null) {
-            sql.append("AND preco <= ? ");
-            params.add(precoMax);
-        }
+        CategoriaEntity categoriaEntity = (categoria != null)
+                ? CategoriaEntity.valueOf(categoria.name())
+                : null;
 
-        sql.append("LIMIT ? OFFSET ?");
-        params.add(limite);
-        params.add(offset);
-
-        List<ProdutoEntity> entities = jdbcTemplate.query(sql.toString(), rowMapper, params.toArray());
+        List<ProdutoEntity> entities = jdbcTemplate.query(
+                sql,
+                rowMapper,
+                ativo,
+                nome,
+                precoMin,
+                precoMax,
+                categoriaEntity != null ? categoriaEntity.name() : null,
+                limite,
+                offset
+        );
         return produtoEntityMapper.toDomainList(entities);
     }
 
     @Override
     public void deletarPorId(int id) {
-        log.info("Deletando produto id={}", id);
-        jdbcTemplate.update("DELETE FROM produto WHERE id = ?", id);
-        log.info("Produto deletado com sucesso id={}", id);
+        log.info("Deletando (desativando) produto id={}", id);
+
+        jdbcTemplate.update(
+                "CALL deletar_por_id(?)", id
+        );
+        log.info("Produto desativado com sucesso id={}", id);
     }
 
     @Override
     public List<Produto> buscarTodos(int limite, int offset) {
-        String sql = "SELECT * FROM produto LIMIT ? OFFSET ?";
+        String sql = "SELECT * FROM buscar_todos_produtos(?, ?)";
         List<ProdutoEntity> entities = jdbcTemplate.query(sql, rowMapper, limite, offset);
         return produtoEntityMapper.toDomainList(entities);
     }
+
+    @Override
+    public Optional<Produto> buscarPorSku(String sku) {
+        log.info("Buscando produto de SKU= {}", sku);
+        String sql = "SELECT * FROM buscar_produto_por_sku(?)";
+        List<ProdutoEntity> entities = jdbcTemplate.query(sql, rowMapper, sku);
+        if (entities.isEmpty()) return Optional.empty();
+        return Optional.of(produtoEntityMapper.toDomain(entities.get(0)));
+    }
+
+    @Override
+    public void decrementarEstoque(int id, int quantidade){
+        log.info("Decrementando {} unidades do produto de id={}", quantidade, id);
+        jdbcTemplate.update("CALL decrementar_estoque(?, ?)", id, quantidade);
+        log.info("Estoque decrementado com sucesso!");
+    }
+
+    @Override
+    public List<Produto> buscarEstoqueBaixo(int limite){
+        log.info("Buscando produtos com estoque abaixo de {}", limite);
+        String sql = "SELECT*FROM buscar_estoque_baixo(?)";
+        List<ProdutoEntity> entities = jdbcTemplate.query(sql, rowMapper, limite);
+        return produtoEntityMapper.toDomainList(entities);
+    }
+
+    @Override
+    public Categoria categoriaMaisEstoque() {
+        log.info("Buscando categorias com mais estoque.");
+        String sql = "SELECT categoria_mais_estoque()";
+        String categoriaStr = jdbcTemplate.queryForObject(sql, String.class);
+        return Categoria.valueOf(categoriaStr);
+    }
+
 }

@@ -1,4 +1,5 @@
 package br.com.cdb.catalogodeprodutos.adapter.output.entity;
+import br.com.cdb.catalogodeprodutos.core.domain.model.Categoria;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,7 @@ public class ProdutoEntity {
     private Boolean ativo;
     private Timestamp criado_em;
     private Timestamp atualizado_em;
+    private Categoria categoria;
 
 
 }

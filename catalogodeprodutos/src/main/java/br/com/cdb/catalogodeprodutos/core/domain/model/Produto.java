@@ -2,6 +2,7 @@ package br.com.cdb.catalogodeprodutos.core.domain.model;
 
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 
 public class Produto {
 
@@ -12,11 +13,13 @@ public class Produto {
         private BigDecimal preco;
         private Integer quantidade;
         private Boolean ativo;
-
+        private Categoria categoria;
+        private Timestamp criadoEm;
+        private Timestamp atualizadoEm;
 
         public Produto(){}
 
-    public Produto(Integer id, String sku, String nome, String descricao, BigDecimal preco, Integer quantidade, Boolean ativo) {
+    public Produto(Integer id, String sku, String nome, String descricao, BigDecimal preco, Integer quantidade, Boolean ativo, Categoria categoria, Timestamp criadoEm, Timestamp atualizadoEm) {
         this.id = id;
         this.sku = sku;
         this.nome = nome;
@@ -24,6 +27,9 @@ public class Produto {
         this.preco = preco;
         this.quantidade = quantidade;
         this.ativo = ativo;
+        this.categoria=categoria;
+        this.criadoEm=criadoEm;
+        this.atualizadoEm=atualizadoEm;
     }
 
 
@@ -47,6 +53,16 @@ public class Produto {
 
         public Boolean getAtivo() { return ativo; }
         public void setAtivo(boolean ativo) { this.ativo = ativo; }
+
+        public Categoria getCategoria(){return categoria;}
+        public void setCategoria(Categoria categoria){ this.categoria = categoria;}
+
+        public  Timestamp getCriadoEm(){return criadoEm;}
+
+        public Timestamp getAtualizadoEm(){return atualizadoEm;}
+        public void setAtualizadoEm(Timestamp atualizadoEm){this.atualizadoEm=atualizadoEm;}
+
+
 
     }
 

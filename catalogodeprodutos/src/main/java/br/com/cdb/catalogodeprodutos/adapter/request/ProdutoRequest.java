@@ -1,4 +1,6 @@
-package br.com.cdb.catalogodeprodutos.adapter.input.response;
+package br.com.cdb.catalogodeprodutos.adapter.request;
+
+import br.com.cdb.catalogodeprodutos.core.domain.model.Categoria;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,7 +12,7 @@ import java.math.BigDecimal;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProdutoResponse {
+public class ProdutoRequest {
     private Integer id;
     private String sku;
     private String nome;
@@ -18,6 +20,7 @@ public class ProdutoResponse {
     private BigDecimal preco;
     private Integer quantidade;
     private Boolean ativo;
+    private Categoria categoria;
 }
 
 

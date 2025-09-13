@@ -1,7 +1,7 @@
-package br.com.cdb.catalogodeprodutos.adapter.input.mapper;
+package br.com.cdb.catalogodeprodutos.adapter.mapper;
 
-import br.com.cdb.catalogodeprodutos.adapter.input.request.ProdutoRequest;
-import br.com.cdb.catalogodeprodutos.adapter.input.response.ProdutoResponse;
+import br.com.cdb.catalogodeprodutos.adapter.request.ProdutoRequest;
+import br.com.cdb.catalogodeprodutos.adapter.response.ProdutoResponse;
 import br.com.cdb.catalogodeprodutos.core.domain.model.Produto;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
