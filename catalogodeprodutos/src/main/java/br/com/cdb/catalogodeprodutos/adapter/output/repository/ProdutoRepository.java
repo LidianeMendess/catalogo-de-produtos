@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.CallableStatement;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.*;
 
 @Component
@@ -38,17 +39,16 @@ public class ProdutoRepository implements ProdutoOutputPort {
 
         jdbcTemplate.update(connection -> {
             CallableStatement cs = connection.prepareCall(
-                    "CALL pr_criar_produto(?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    "CALL pr_create_produto(?, ?, ?, ?, ?, ?, ?, ?)"
             );
-            cs.setObject(1, produto.getId(), java.sql.Types.INTEGER); // null se quiser que banco gere
+            cs.setObject(1, produto.getId(), java.sql.Types.INTEGER);
             cs.setString(2, produto.getSku());
             cs.setString(3, produto.getNome());
             cs.setString(4, produto.getDescricao());
             cs.setBigDecimal(5, produto.getPreco());
             cs.setObject(6, produto.getQuantidade(), java.sql.Types.INTEGER);
             cs.setObject(7, produto.getAtivo(), java.sql.Types.BOOLEAN);
-            cs.setObject(8, produto.getCriadoEm(), java.sql.Types.TIMESTAMP);
-            cs.setObject(9, produto.getAtualizadoEm(), java.sql.Types.TIMESTAMP);
+            cs.setObject(8,produto.getCategoria().name(), Types.OTHER);
             return cs;
         });
 
@@ -62,7 +62,7 @@ public class ProdutoRepository implements ProdutoOutputPort {
 
         jdbcTemplate.update(connection -> {
             CallableStatement cs = connection.prepareCall(
-                    "CALL pr_atualizar_produtos(?::integer, ?::varchar, ?::varchar, ?::numeric, ?::integer, ?::boolean, ?::timestamp)"
+                    "CALL pr_atualizar_produtos(?, ?, ?, ?, ?,?, ?)"
             );
             cs.setInt(1, id);
             cs.setString(2, produtoAtualizado.getNome());
@@ -75,7 +75,6 @@ public class ProdutoRepository implements ProdutoOutputPort {
             } else {
                 cs.setNull(7, java.sql.Types.TIMESTAMP);
             }
-
 
             return cs;
         });
@@ -133,7 +132,7 @@ public class ProdutoRepository implements ProdutoOutputPort {
 
     @Override
     public List<Produto> buscarTodos(int limite, int offset) {
-        String sql = "SELECT * FROM buscar_todos_produtos(?, ?)";
+        String sql = "SELECT * FROM buscar_todos(?, ?)";
         List<ProdutoEntity> entities = jdbcTemplate.query(sql, rowMapper, limite, offset);
         return produtoEntityMapper.toDomainList(entities);
     }

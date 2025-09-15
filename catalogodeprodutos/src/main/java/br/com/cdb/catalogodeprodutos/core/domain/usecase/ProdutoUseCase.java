@@ -15,7 +15,6 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -33,45 +32,94 @@ public class ProdutoUseCase implements ProdutoInputPort {
 
     @Override
     public Produto createProduto(Produto produto) {
-
         logger.info("Criando produto id={}", produto.getId());
 
-        if (produto.getId() == null) {
+        validarId(produto.getId());
+        validarSku(produto.getSku());
+        validarPreco(produto.getPreco());
+        validarNome(produto.getNome());
+
+        produto.setAtivo(true);
+
+        logger.warn("Produto salvo com sucesso: {}", produto);
+        return produtoOutputPort.salvar(produto);
+    }
+
+    @Override
+    public Produto atualizarProduto(int id, Produto produtoAtualizado) {
+        logger.info("Atualizando produto id={}", id);
+
+        Produto existente = produtoOutputPort.buscarPorId(id)
+                .orElseThrow(() -> {
+                    logger.error("Produto não encontrado com id={}", id);
+                    return new ProdutoNaoEncontradoException("Produto não encontrado com id: " + id);
+                });
+
+        validarSkuAtualizacao(produtoAtualizado.getSku(), existente.getSku());
+        atualizarCamposExistentes(existente, produtoAtualizado);
+
+        Produto atualizado = produtoOutputPort.atualizarProduto(id, existente);
+        logger.info("Produto atualizado com sucesso: id={}", atualizado.getId());
+        return atualizado;
+    }
+
+    private void validarId(Integer id) {
+        if (id == null) {
             logger.error("ID é obrigatório.");
             throw new IllegalArgumentException("ID não pode ser nulo!");
         }
-
-        if (produtoOutputPort.buscarPorId(produto.getId()).isPresent()) {
-            logger.error("Já existe um produto com ID={}", produto.getId());
+        if (produtoOutputPort.buscarPorId(id).isPresent()) {
+            logger.error("Já existe um produto com ID={}", id);
             throw new IllegalArgumentException("ID já existe!");
         }
-        if (produto.getSku() == null || produto.getSku().isBlank()) {
+    }
+
+    private void validarSku(String sku) {
+        if (sku == null || sku.isBlank()) {
             logger.error("SKU é obrigatório.");
             throw new IllegalArgumentException("SKU é obrigatório!");
         }
-
-        Optional<Produto> existenteSku = produtoOutputPort.buscarPorSku(produto.getSku());
-        if (existenteSku.isPresent()) {
-            logger.error("SKU já existe: {}", produto.getSku());
+        if (produtoOutputPort.buscarPorSku(sku).isPresent()) {
+            logger.error("SKU já existe: {}", sku);
             throw new IllegalArgumentException("SKU já existe!");
         }
+    }
 
-        if (produto.getPreco() != null && produto.getPreco().compareTo(BigDecimal.ZERO) < 0) {
-            logger.error("Preço não pode ser negativo preço={}", produto.getPreco());
+    private void validarSkuAtualizacao(String skuNovo, String skuExistente) {
+        if (skuNovo != null && !skuNovo.equals(skuExistente)) {
+            logger.error("Tentativa de alterar SKU do produto");
+            throw new IllegalArgumentException("SKU é imutável e não pode ser alterado!");
+        }
+    }
+
+    private void validarNome(String nome) {
+        if (nome != null && (nome.length() < 3 || nome.length() > 120)) {
+            logger.error("Nome deve ter entre 3 e 120 caracteres: {}", nome);
+            throw new IllegalArgumentException("Nome deve ter entre 3 e 120 caracteres");
+        }
+    }
+
+    private void validarPreco(BigDecimal preco) {
+        if (preco != null && preco.compareTo(BigDecimal.ZERO) < 0) {
+            logger.error("Preço não pode ser negativo preço={}", preco);
             throw new IllegalArgumentException("Preço não pode ser negativo");
         }
+    }
 
-        if (produto.getNome() != null) {
-            if (produto.getNome().length() < 3 || produto.getNome().length() > 120) {
-                logger.error("Nome deve ter entre 3 e 120 caracteres: {}", produto.getNome());
-                throw new IllegalArgumentException("Nome deve ter entre 3 e 120 caracteres");
+    private void atualizarCamposExistentes(Produto existente, Produto atualizado) {
+        if (atualizado.getNome() != null) existente.setNome(atualizado.getNome());
+        if (atualizado.getDescricao() != null) existente.setDescricao(atualizado.getDescricao());
+        if (atualizado.getQuantidade() != null) {
+            if (atualizado.getQuantidade() < 0) {
+                logger.error("Quantidade não pode ser negativa: {}", atualizado.getQuantidade());
+                throw new IllegalArgumentException("Quantidade não pode ser negativa");
             }
+            existente.setQuantidade(atualizado.getQuantidade());
         }
-
-        produto.setAtivo(true);
-        logger.warn("produto salvo com sucesso: {}", produto);
-        return produtoOutputPort.salvar(produto);
-
+        if (atualizado.getPreco() != null) validarPreco(atualizado.getPreco());
+        if (atualizado.getPreco() != null) existente.setPreco(atualizado.getPreco());
+        if (atualizado.getAtivo() != null) existente.setAtivo(atualizado.getAtivo());
+        if (atualizado.getCategoria() != null) existente.setCategoria(atualizado.getCategoria());
     }
 
     @Override
@@ -104,62 +152,6 @@ public class ProdutoUseCase implements ProdutoInputPort {
     }
 
     @Override
-    public Produto atualizarProduto(int id, Produto produtoAtualizado) {
-        logger.info("Atualizando produto id={}", id);
-
-        Produto existente = produtoOutputPort.buscarPorId(id)
-                .orElseThrow(() -> {
-                    logger.error("Produto não encontrado com id={}", id);
-                   return new ProdutoNaoEncontradoException("Produto não encontrado com id: " + id);
-                });
-
-        if (produtoAtualizado.getSku() != null && !produtoAtualizado.getSku().equals(existente.getSku())) {
-            logger.error("Tentativa de alterar SKU do produto id={}", id);
-            throw new IllegalArgumentException("SKU é imutável e não pode ser alterado!");
-        }
-
-        if (produtoAtualizado.getNome() != null) {
-            if (produtoAtualizado.getNome().length() < 3 || produtoAtualizado.getNome().length() > 120) {
-                logger.error("Nome inválido para produto id={}: {}", id, produtoAtualizado.getNome());
-                throw new IllegalArgumentException("Nome deve ter entre 3 e 120 caracteres");
-            }
-            existente.setNome(produtoAtualizado.getNome());
-            logger.debug("Nome atualizado para produto id={}: {}", id, produtoAtualizado.getNome());
-        }
-
-        if (produtoAtualizado.getDescricao() != null) existente.setDescricao(produtoAtualizado.getDescricao());
-        if (produtoAtualizado.getQuantidade() != null) {
-            if (produtoAtualizado.getQuantidade() < 0) {
-                logger.error("Quantidade negativa para produto id={}: {}", id, produtoAtualizado.getQuantidade());
-                throw new IllegalArgumentException("Quantidade não pode ser negativa");
-            }
-            existente.setQuantidade(produtoAtualizado.getQuantidade());
-            logger.debug("Quantidade atualizada para produto id={}: {}", id, produtoAtualizado.getQuantidade());
-        }
-
-        if (produtoAtualizado.getAtivo() != null) existente.setAtivo(produtoAtualizado.getAtivo());
-        logger.debug("Status ativo atualizado para produto id={}: {}", id, produtoAtualizado.getAtivo());
-
-        if (produtoAtualizado.getPreco() != null) {
-            if (produtoAtualizado.getPreco().compareTo(BigDecimal.ZERO) < 0) {
-                logger.error("Preço negativo para produto id={}: {}", id, produtoAtualizado.getPreco());
-                throw new IllegalArgumentException("Preço não pode ser negativo");
-            }
-            existente.setPreco(produtoAtualizado.getPreco());
-            logger.debug("Preço atualizado para produto id={}: {}", id, produtoAtualizado.getPreco());
-        }
-
-        if (produtoAtualizado.getCategoria() !=null){
-            logger.info("Atualizando categoria");
-            existente.setCategoria(produtoAtualizado.getCategoria());
-        }
-        Produto atualizado = produtoOutputPort.atualizarProduto(id, existente);
-        logger.info("Produto atualizado com sucesso: id={}", atualizado.getId());
-        return atualizado;
-
-    }
-
-    @Override
     public void excluirProduto(int id) {
         logger.info("Excluindo (soft delete) produto id={}", id);
 
@@ -167,6 +159,7 @@ public class ProdutoUseCase implements ProdutoInputPort {
 
         logger.info("Produto marcado como inativo com sucesso: id={}", id);
     }
+
     @Override
     public Produto decrementarEstoque(int id, int quantidade) {
         Produto existente = produtoOutputPort.buscarPorId(id)
@@ -177,15 +170,12 @@ public class ProdutoUseCase implements ProdutoInputPort {
             throw new IllegalArgumentException("Não é possível reduzir estoque abaixo de 0");
         }
 
-        String sql = "CALL prr_atualizar_produto(?, NULL, NULL, NULL, ?, NULL, ?)";
-        Timestamp agora = Timestamp.valueOf(LocalDateTime.now());
-        jdbcTemplate.update(sql, id, novoEstoque, agora);
-
         existente.setQuantidade(novoEstoque);
-        existente.setAtualizadoEm(agora);
+        existente.setAtualizadoEm(Timestamp.valueOf(LocalDateTime.now()));
 
-        return existente;
+        return produtoOutputPort.atualizarProduto(id, existente);
     }
+
 
     @Override
     public List<Produto> buscarEstoqueBaixo(int limite) {
@@ -229,4 +219,24 @@ public class ProdutoUseCase implements ProdutoInputPort {
         return categoriaMaisEstoque;
     }
 
+    @Override
+    public List<Produto> buscarTodos(int limite, int offset){
+        logger.info("Buscando todos os produtos com limite={} e offset={}", limite, offset);
+
+        if (limite <= 0) {
+            logger.error("Limite inválido: {}", limite);
+            throw new IllegalArgumentException("O limite deve ser maior que 0");
+        }
+        if (offset < 0) {
+            logger.error("Offset inválido: {}", offset);
+            throw new IllegalArgumentException("O offset não pode ser negativo");
+        }
+
+        List<Produto> produtos = produtoOutputPort.buscarTodos(limite, offset);
+
+        logger.debug("Quantidade de produtos encontrados: {}", produtos.size());
+
+        return produtos;
+
+    }
 }

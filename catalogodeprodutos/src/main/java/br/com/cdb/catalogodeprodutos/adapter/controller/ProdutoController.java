@@ -122,12 +122,14 @@ public class ProdutoController {
             @PathVariable int id,
             @PathVariable int quantidade
     ) {
+        log.info("Decrementando quantidade={}, do produto de id = {}", quantidade, id);
         Produto produto = produtoInputPort.decrementarEstoque(id, quantidade);
         return ResponseEntity.ok(produtoMapper.toResponse(produto));
     }
 
     @GetMapping("estoqueAbaixo/{limite}")
     public ResponseEntity<List<ProdutoResponse>> buscarestoqueBaixo( @PathVariable int limite) {
+        log.info("Buscando estoque abaixo de {}", limite);
     List<Produto> produtos = produtoInputPort.buscarEstoqueBaixo(limite);
     List<ProdutoResponse> produtoResponse = produtoMapper.toResponseList(produtos);;
     return ResponseEntity.ok(produtoResponse);
@@ -135,10 +137,25 @@ public class ProdutoController {
 
     @GetMapping("/categoria/mais-estoque")
     public ResponseEntity<Categoria> categoriaMaisEstoque() {
+        log.info("Buscando categoria com mais estoque.");
         Categoria categoria = produtoInputPort.categoriaMaisEstoque();
         return ResponseEntity.ok(categoria);
     }
 
+    @GetMapping("/todos")
+    public ResponseEntity<List<ProdutoResponse>> buscarTodos(
+            @RequestParam(defaultValue = "10") int limite,
+            @RequestParam(defaultValue = "0") int offset
+    ) {
+        log.info("Buscando todos os produtos cadastrados com limite={} e offset={}", limite, offset);
 
+        List<Produto> produtosDomain = produtoInputPort.buscarTodos(limite, offset);
+
+        List<ProdutoResponse> produtoResponse = produtoMapper.toResponseList(produtosDomain);
+
+        log.info("Quantidade de produtos retornados: {}", produtoResponse.size());
+
+        return ResponseEntity.ok(produtoResponse);
+    }
 
 }

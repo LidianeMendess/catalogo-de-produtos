@@ -18,5 +18,5 @@ public interface ProdutoInputPort {
     void excluirProduto(int id);
     List<Produto> buscarEstoqueBaixo( int limite);
     Categoria categoriaMaisEstoque();
-
+    List<Produto> buscarTodos(int limite, int offset);
 }
