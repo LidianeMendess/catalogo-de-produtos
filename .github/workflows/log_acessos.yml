@@ -1,0 +1,24 @@
+name: Registrar Acessos
+
+# Aciona a Action para push em qualquer branch e pull request
+on:
+  push:
+    branches: [ '' ]  # Todas as branches
+  pull_request:
+    types: [ opened, reopened ]
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Registrar evento
+        run: |
+          echo "Evento detectado: $GITHUB_EVENT_NAME por $GITHUB_ACTOR em $(date)" >> access_log.txt
+
+      - name: Commit do log
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add access_log.txt
+          git commit -m "Atualiza log de acessos"
+          git push
