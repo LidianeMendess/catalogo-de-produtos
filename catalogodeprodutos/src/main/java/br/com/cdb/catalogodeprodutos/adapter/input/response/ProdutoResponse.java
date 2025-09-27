@@ -1,4 +1,4 @@
-package br.com.cdb.catalogodeprodutos.adapter.response;
+package br.com.cdb.catalogodeprodutos.adapter.input.response;
 import br.com.cdb.catalogodeprodutos.core.domain.model.Categoria;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

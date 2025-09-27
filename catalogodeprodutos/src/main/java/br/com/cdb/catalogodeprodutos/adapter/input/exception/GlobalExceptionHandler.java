@@ -1,4 +1,4 @@
-package br.com.cdb.catalogodeprodutos.adapter.exception;
+package br.com.cdb.catalogodeprodutos.adapter.input.exception;
 
 import br.com.cdb.catalogodeprodutos.core.domain.exception.ProdutoNaoEncontradoException;
 

@@ -1,9 +1,9 @@
-package br.com.cdb.catalogodeprodutos.adapter.controller;
+package br.com.cdb.catalogodeprodutos.adapter.input.controller;
 
 
-import br.com.cdb.catalogodeprodutos.adapter.mapper.ProdutoMapper;
-import br.com.cdb.catalogodeprodutos.adapter.request.ProdutoRequest;
-import br.com.cdb.catalogodeprodutos.adapter.response.ProdutoResponse;
+import br.com.cdb.catalogodeprodutos.adapter.input.mapper.ProdutoMapper;
+import br.com.cdb.catalogodeprodutos.adapter.input.request.ProdutoRequest;
+import br.com.cdb.catalogodeprodutos.adapter.input.response.ProdutoResponse;
 import br.com.cdb.catalogodeprodutos.core.domain.model.Categoria;
 import br.com.cdb.catalogodeprodutos.core.domain.model.Produto;
 import br.com.cdb.catalogodeprodutos.port.input.ProdutoInputPort;

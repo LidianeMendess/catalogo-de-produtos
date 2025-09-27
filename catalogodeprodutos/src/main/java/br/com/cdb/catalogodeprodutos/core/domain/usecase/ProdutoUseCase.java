@@ -237,6 +237,6 @@ public class ProdutoUseCase implements ProdutoInputPort {
         logger.debug("Quantidade de produtos encontrados: {}", produtos.size());
 
         return produtos;
-
     }
+
 }

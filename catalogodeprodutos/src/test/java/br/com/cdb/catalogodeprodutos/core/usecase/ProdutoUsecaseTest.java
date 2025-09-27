@@ -1,0 +1,355 @@
+package br.com.cdb.catalogodeprodutos.core.usecase;
+
+import br.com.cdb.catalogodeprodutos.core.domain.exception.ProdutoNaoEncontradoException;
+import br.com.cdb.catalogodeprodutos.core.domain.model.Categoria;
+import br.com.cdb.catalogodeprodutos.core.domain.model.Produto;
+import br.com.cdb.catalogodeprodutos.core.domain.usecase.ProdutoUseCase;
+import br.com.cdb.catalogodeprodutos.factory.ProdutoFactoryBot;
+import br.com.cdb.catalogodeprodutos.port.output.ProdutoOutputPort;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.when;
+
+
+@ExtendWith(SpringExtension.class)
+class ProdutoUsecaseTest {
+
+    @Mock
+    ProdutoOutputPort produtoOutputPort;
+
+    @InjectMocks
+    ProdutoUseCase produtoUsecase;
+
+    @Test
+    void criarProdutoIdDuplicadoErro() {
+
+        Produto produto = new ProdutoFactoryBot()
+                .comId(1)
+                .build();
+        when(produtoOutputPort.buscarPorId(1)).thenReturn(Optional.of(produto));
+
+        assertThatThrownBy(() -> produtoUsecase.createProduto(produto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("ID já existe!");
+
+        verify(produtoOutputPort, never()).salvar(any());
+    }
+
+    @Test
+    void criarProdutoIdNuloErro(){
+
+        Produto produto = new ProdutoFactoryBot()
+                .comId(null)
+                .build();
+
+        assertThatThrownBy(() -> produtoUsecase.createProduto(produto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("ID não pode ser nulo!");
+
+        verify(produtoOutputPort, never()).salvar(any());
+    }
+
+    @ParameterizedTest(name = "ID inválido: {0}")
+    @ValueSource(ints = {0, -1})
+    void idNaoExisteErro(int id){
+
+        assertThatThrownBy(() -> produtoUsecase.findById(id))
+                .isInstanceOf(ProdutoNaoEncontradoException.class)
+                .hasMessage("Produto com ID " + id+ " não encontrado");
+
+        verify(produtoOutputPort, never()).salvar(any());
+    }
+
+    @ParameterizedTest(name =  "SKU inválido: \"{0}\"")
+    @NullAndEmptySource
+    @ValueSource(strings = {" "})
+    void criarProdutoSkuObrigatorio(String sku){
+        Produto produto = new ProdutoFactoryBot()
+                .comId(1)
+                .comSku(sku)
+                .build();
+
+        assertThatThrownBy(() -> produtoUsecase.createProduto(produto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("SKU é obrigatório!");
+
+        verify(produtoOutputPort, never()).salvar(any());
+    }
+
+    @Test
+    void criarProdutoSkuDuplicadoErro(){
+
+        Produto produto = new ProdutoFactoryBot()
+                .comSku("ABC123")
+                .build();
+        when(produtoOutputPort.buscarPorSku("ABC123")).thenReturn(Optional.of(produto));
+
+        assertThatThrownBy(() -> produtoUsecase.createProduto(produto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("SKU já existe!");
+
+        verify(produtoOutputPort, never()).salvar(any());
+    }
+
+    @ParameterizedTest(name = "Nome inválido: {0}")
+    @ValueSource(strings = {"A", "AB", "NOMEDEVECONTERNOMAXIMOCENTOEVINTECARACTERESNOMEDEVECONTERNOMAXIMOCENTOEVINTECARACTERESNOMEDEVECONTERNOMAXIMOCENTOEVINTECA"})
+    void lancarExcecaoParaNomeInvalido(String nome){
+        assertThatThrownBy(() -> produtoUsecase.createProduto(
+                new ProdutoFactoryBot().comNome(nome).build()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Nome deve ter entre 3 e 120 caracteres");
+    }
+
+    @ParameterizedTest(name = "preço válido: {0}")
+    @ValueSource(strings = {"-0.01", "-10"})
+    void lancarExcecaoPrecoInvalido(String precoStr){
+        BigDecimal preco = new BigDecimal(precoStr);
+        Produto produto = new ProdutoFactoryBot().comPreco(preco).build();
+
+        assertThatThrownBy(() -> produtoUsecase.createProduto(produto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Preço não pode ser negativo");
+    }
+
+    @Test
+    void criarProdutoOK(){
+        Produto produto = new ProdutoFactoryBot()
+                .comId(1)
+                .comSku("ABC123")
+                .comNome("ProdtoTeste")
+                .comPreco(new BigDecimal("100.00"))
+                .build();
+
+        when(produtoOutputPort.buscarPorId(1)).thenReturn(Optional.empty());
+        when(produtoOutputPort.buscarPorSku("ABC123")).thenReturn(Optional.empty());
+
+        when(produtoOutputPort.salvar(any(Produto.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Produto produtoSalvo = produtoUsecase.createProduto(produto);
+
+        assertEquals(produto, produtoSalvo);
+
+        verify(produtoOutputPort).salvar(produto);
+
+    }
+    @Test
+    void atualizarSkuErro(){
+
+      Produto existente = new ProdutoFactoryBot()
+              .comId(1)
+              .comSku("ABC123")
+              .build();
+
+      Produto atualizado = new ProdutoFactoryBot()
+              .comId(1)
+              .comSku("XYZ456")
+              .build();
+
+       when(produtoOutputPort.buscarPorId(1)).thenReturn(Optional.of(existente));
+
+       assertThatThrownBy(() -> produtoUsecase.atualizarProduto(1, atualizado))
+               .isInstanceOf(IllegalArgumentException.class)
+               .hasMessage("SKU é imutável e não pode ser alterado!");
+
+        verify(produtoOutputPort, never()).atualizarProduto(anyInt(), any());
+    }
+
+    @Test
+    void atualizarProdutoOk(){
+        Produto existente = new ProdutoFactoryBot()
+                .comId(1)
+                .comSku("ABC123")
+                .comNome("Original")
+                .comPreco(new BigDecimal("50.00"))
+                .comQuantidade(10)
+                .build();
+
+        Produto atualizado = new ProdutoFactoryBot()
+                .comId(1)
+                .comSku("ABC123")
+                .comNome("Atualizado")
+                .comPreco(new BigDecimal("60.00"))
+                .comQuantidade(20)
+                .build();
+
+        when(produtoOutputPort.buscarPorId(1)).thenReturn(Optional.of(existente));
+        when(produtoOutputPort.atualizarProduto(1, existente)).thenAnswer(invocation -> invocation.getArgument(1));
+
+        Produto resultado = produtoUsecase.atualizarProduto(1, atualizado);
+
+        assertEquals("Atualizado", resultado.getNome());
+        assertEquals(20, resultado.getQuantidade());
+        assertEquals(new BigDecimal("60.00"), resultado.getPreco());
+        verify(produtoOutputPort).atualizarProduto(1, existente);
+    }
+
+    @ParameterizedTest(name = "quantidade inválida: {0}")
+    @ValueSource(ints = {1, 5, 10})
+    void decrementarEstoqueErro(int quantidade) {
+        Produto produto = new ProdutoFactoryBot().comQuantidade(0).build();
+
+        when(produtoOutputPort.buscarPorId(produto.getId()))
+                .thenReturn(Optional.of(produto));
+
+        assertThatThrownBy(() -> produtoUsecase.decrementarEstoque(produto.getId(), quantidade))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Não é possível reduzir estoque abaixo de 0");
+    }
+
+    @ParameterizedTest(name = "limite: {0}")
+    @ValueSource(ints = {5, 10, 20})
+    void buscarEstoqueBaixoProdutoNaoEncontrado(int limite) {
+        when(produtoOutputPort.buscarEstoqueBaixo(limite))
+                .thenReturn(Collections.emptyList());
+
+        assertThatThrownBy(() -> produtoUsecase.buscarEstoqueBaixo(limite))
+                .isInstanceOf(ProdutoNaoEncontradoException.class)
+                .hasMessage("Não há produtos com estoque abaixo de: " + limite);
+    }
+
+    @Test
+    void buscarEstoqueBaixoComProdutosok() {
+        Produto p1 = new ProdutoFactoryBot().comQuantidade(3).build();
+        Produto p2 = new ProdutoFactoryBot().comQuantidade(2).build();
+
+        when(produtoOutputPort.buscarEstoqueBaixo(5))
+                .thenReturn(List.of(p1, p2));
+
+        List<Produto> resultado = produtoUsecase.buscarEstoqueBaixo(5);
+
+        assertThat(resultado).hasSize(2).containsExactlyInAnyOrder(p1, p2);
+    }
+    @Test
+    void categoriaMaisEstoqueQuandoNenhumProdutoAtivoEntaoLancaExcecao() {
+         when(produtoOutputPort.buscarComFiltros(true, null, null, null, Integer.MAX_VALUE, 0, null))
+                 .thenReturn(Collections.emptyList());
+
+         assertThatThrownBy(() -> produtoUsecase.categoriaMaisEstoque())
+                                    .isInstanceOf(ProdutoNaoEncontradoException.class)
+                                    .hasMessage("Nenhum produto ativo encontrado!");
+    }
+
+    @Test
+    void categoriaMaisEstoqueQuandoProdutosSemCategoriaEntaoLancaExcecao() {
+        Produto produto = new ProdutoFactoryBot()
+                .comCategoria(null)
+                .comQuantidade(10)
+                .build();
+
+            when(produtoOutputPort.buscarComFiltros(true, null, null, null, Integer.MAX_VALUE, 0, null))
+                    .thenReturn(List.of(produto));
+
+            assertThatThrownBy(() -> produtoUsecase.categoriaMaisEstoque())
+                    .isInstanceOf(ProdutoNaoEncontradoException.class)
+                    .hasMessage("Nenhum produto com categoria válida encontrado!");
+    }
+
+    @Test
+    void categoriaMaisEstoqueQuandoProdutosValidoEntaoRetornaCategoriaComMaisEstoque() {
+        Produto p1 = new ProdutoFactoryBot()
+                .comCategoria(Categoria.GATO)
+                .comQuantidade(10)
+                .build();
+
+        Produto p2 = new ProdutoFactoryBot()
+                .comCategoria(Categoria.CAO)
+                .comQuantidade(20)
+                .build();
+
+        when(produtoOutputPort.buscarComFiltros(true, null, null, null, Integer.MAX_VALUE, 0, null))
+                    .thenReturn(List.of(p1, p2));
+
+        Categoria categoria = produtoUsecase.categoriaMaisEstoque();
+
+        assertThat(categoria).isEqualTo(Categoria.CAO);
+    }
+
+    @Test
+    void categoriaMaisEstoqueQuandoQuantidadeNullEntaoConsideraZero() {
+        Produto p1 = new ProdutoFactoryBot()
+                .comCategoria(Categoria.GATO)
+                .comQuantidade(null)
+                .build();
+
+        Produto p2 = new ProdutoFactoryBot()
+                .comCategoria(Categoria.CAO)
+                .comQuantidade(1)
+                .build();
+
+        when(produtoOutputPort.buscarComFiltros(true, null, null, null, Integer.MAX_VALUE, 0, null))
+                    .thenReturn(List.of(p1, p2));
+
+        Categoria categoria = produtoUsecase.categoriaMaisEstoque();
+
+            assertThat(categoria).isEqualTo(Categoria.CAO);
+        }
+
+    @Test
+    void buscarTodosQuandoLimiteMenorOuIgualZeroEntaoLancaExcecao() {
+        assertThatThrownBy(() -> produtoUsecase.buscarTodos(0, 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("O limite deve ser maior que 0");
+
+        assertThatThrownBy(() -> produtoUsecase.buscarTodos(-5, 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("O limite deve ser maior que 0");
+    }
+
+    @Test
+    void buscarTodosQuandoOffsetNegativoEntaoLancaExcecao() {
+        assertThatThrownBy(() -> produtoUsecase.buscarTodos(10, -1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("O offset não pode ser negativo");
+    }
+
+    @Test
+    void buscarTodosQuandoParametrosValidosEntaoRetornaListaDeProdutos() {
+        Produto produto = new ProdutoFactoryBot()
+                .comId(1)
+                .comSku("ABC123")
+                .build();
+
+        when(produtoOutputPort.buscarTodos(10, 0))
+                .thenReturn(List.of(produto));
+
+        List<Produto> resultado = produtoUsecase.buscarTodos(10, 0);
+
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getSku()).isEqualTo("ABC123");
+    }
+
+    @Test
+    void buscarTodosQuandoNaoExistemProdutosEntaoRetornaListaVazia() {
+        when(produtoOutputPort.buscarTodos(10, 0))
+                .thenReturn(Collections.emptyList());
+
+        List<Produto> resultado = produtoUsecase.buscarTodos(10, 0);
+
+        assertThat(resultado).isEmpty();
+    }
+
+}
+
+
+
+
+
