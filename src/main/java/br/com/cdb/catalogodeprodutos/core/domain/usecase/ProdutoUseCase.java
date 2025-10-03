@@ -23,12 +23,10 @@ public class ProdutoUseCase implements ProdutoInputPort {
     private static final Logger logger= LoggerFactory.getLogger(ProdutoUseCase.class);
 
     private final ProdutoOutputPort produtoOutputPort;
-    private final JdbcTemplate jdbcTemplate;
 
-    public ProdutoUseCase(ProdutoOutputPort produtoOutputPort, JdbcTemplate jdbcTemplate) {
+    public ProdutoUseCase(ProdutoOutputPort produtoOutputPort) {
         this.produtoOutputPort = produtoOutputPort;
-        this.jdbcTemplate = jdbcTemplate;
-    }
+     }
 
     @Override
     public Produto createProduto(Produto produto) {
@@ -160,14 +158,13 @@ public class ProdutoUseCase implements ProdutoInputPort {
     public void excluirProduto(int id) {
         logger.info("Excluindo (soft delete) produto id={}", id);
 
-        produtoOutputPort.buscarPorId(id).ifPresent(produto -> {
+        produtoOutputPort.buscarPorId(id).ifPresentOrElse(produto -> {
             produtoOutputPort.deletarPorId(id);
             logger.info("Produto marcado como inativo com sucesso: id={}", id);
+        }, () -> {
+            logger.info("Produto com id={} não encontrado para exclusão (soft delete ignorado)", id);
         });
-
-        logger.info("Produto com id={} não encontrado para exclusão (soft delete ignorado)", id);
     }
-
 
     @Override
     public Produto decrementarEstoque(int id, int quantidade) {
