@@ -1,6 +1,6 @@
 package br.com.cdb.catalogodeprodutos.adapter.input.controller;
 
-import br.com.cdb.catalogodeprodutos.adapter.input.controller.api.ProdutoApi;
+import br.com.cdb.catalogodeprodutos.adapter.input.controller.api.SwaggerProdutoController;
 import br.com.cdb.catalogodeprodutos.adapter.input.facade.ProdutoFacade;
 import br.com.cdb.catalogodeprodutos.adapter.input.request.ProdutoRequest;
 import br.com.cdb.catalogodeprodutos.adapter.input.response.ProdutoResponse;
@@ -18,7 +18,7 @@ import java.util.List;
 
 @RestController
 @Slf4j
-public class ProdutoController implements ProdutoApi {
+public class ProdutoController implements SwaggerProdutoController {
 
     private final ProdutoFacade produtoFacade;
 

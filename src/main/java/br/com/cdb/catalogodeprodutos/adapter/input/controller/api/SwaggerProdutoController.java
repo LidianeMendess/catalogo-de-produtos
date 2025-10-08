@@ -20,7 +20,7 @@ import java.util.List;
         description = "Gerenciamento de produtos: busca, criação, atualização, exclusão e consultas específicas de estoque e categoria."
 )
 @RequestMapping("/produtos")
-public interface ProdutoApi {
+public interface SwaggerProdutoController {
 
     @Operation(summary = "Insere novo produto")
     @ApiResponse(responseCode = "201", description = "Produto inserido com sucesso",
