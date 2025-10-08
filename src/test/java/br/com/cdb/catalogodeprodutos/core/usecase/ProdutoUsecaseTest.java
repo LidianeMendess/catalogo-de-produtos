@@ -38,35 +38,6 @@ class ProdutoUsecaseTest {
     @InjectMocks
     ProdutoUseCase produtoUsecase;
 
-    @Test
-    void criarProdutoIdDuplicadoErro() {
-
-        Produto produto = new ProdutoFactoryBot()
-                .comId(1)
-                .build();
-        when(produtoOutputPort.buscarPorId(1)).thenReturn(Optional.of(produto));
-
-        assertThatThrownBy(() -> produtoUsecase.createProduto(produto))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("ID já existe!");
-
-        verify(produtoOutputPort, never()).salvar(any());
-    }
-
-    @Test
-    void criarProdutoIdNuloErro(){
-
-        Produto produto = new ProdutoFactoryBot()
-                .comId(null)
-                .build();
-
-        assertThatThrownBy(() -> produtoUsecase.createProduto(produto))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("ID não pode ser nulo!");
-
-        verify(produtoOutputPort, never()).salvar(any());
-    }
-
     @ParameterizedTest(name = "ID inválido: {0}")
     @ValueSource(ints = {0, -1})
     void idNaoExisteErro(int id){
@@ -337,6 +308,7 @@ class ProdutoUsecaseTest {
 
         assertThat(resultado).hasSize(2).containsExactlyInAnyOrder(p1, p2);
     }
+
     @Test
     void categoriaMaisEstoqueQuandoNenhumProdutoAtivoEntaoLancaExcecao() {
          when(produtoOutputPort.buscarComFiltros(true, null, null, null, Integer.MAX_VALUE, 0, null))

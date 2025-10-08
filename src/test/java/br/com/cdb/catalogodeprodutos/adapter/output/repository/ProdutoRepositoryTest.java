@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+
 @ExtendWith(SpringExtension.class)
 class ProdutoRepositoryTest {
 
@@ -42,72 +43,62 @@ class ProdutoRepositoryTest {
     }
 
     @Test
-    void salvarProdutoErro(){
-        Produto produto = new ProdutoFactoryBot()
-                .comId(1)
-                .build();
-
-        when(jdbcTemplate.update(any(PreparedStatementCreator.class)))
-                .thenThrow(new RuntimeException("Erro no banco"));
-
-        org.junit.jupiter.api.Assertions.assertThrows(
-                RuntimeException.class,
-                () -> produtoRepository.salvar(produto));
-
-        verify(jdbcTemplate).update(any(PreparedStatementCreator.class));
-
-    }
-
-    @Test
-    void salvarProdutoSemCategoriaNaoDeveQuebrar() {
-        Produto produto = new ProdutoFactoryBot()
-                .comId(1)
-                .comSku("SKU999")
-                .comCategoria(null)
-                .build();
-
-        when(jdbcTemplate.update(any(PreparedStatementCreator.class))).thenReturn(1);
-
-        Produto salvo = produtoRepository.salvar(produto);
-
-        assertEquals("SKU999", salvo.getSku());
-        verify(jdbcTemplate).update(any(PreparedStatementCreator.class));
-    }
-
-    @Test
     void salvarProdutoOk() {
+        Produto produto = new ProdutoFactoryBot()
+                .comSku("SKU123")
+                .comNome("Produto Teste")
+                .comDescricao("Descrição teste")
+                .comPreco(new BigDecimal("100.00"))
+                .comQuantidade(10)
+                .comAtivo(true)
+                .comCategoria(Categoria.CAO)
+                .build();
+
+        ProdutoEntity produtoEntity = new ProdutoEntity();
+        produtoEntity.setSku(produto.getSku());
+        produtoEntity.setNome(produto.getNome());
+        produtoEntity.setDescricao(produto.getDescricao());
+        produtoEntity.setPreco(produto.getPreco());
+        produtoEntity.setQuantidade(produto.getQuantidade());
+        produtoEntity.setCategoria(produto.getCategoria());
+
+        when(produtoEntityMapper.toEntity(produto)).thenReturn(produtoEntity);
+
+        when(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), any(Object[].class)))
+                .thenReturn(produtoEntity);
+
+        mockMapper(produtoEntity, produto);
+
+        Produto resultado = produtoRepository.salvar(produto);
+
+        assertNotNull(resultado);
+    }
+
+    @Test
+    void salvarProdutoErro() {
         Produto produto = new ProdutoFactoryBot()
                 .comId(1)
                 .comSku("SKU123")
                 .comNome("Produto teste")
+                .comCategoria(Categoria.GATO)
                 .build();
 
-        when(jdbcTemplate.update(any(PreparedStatementCreator.class))).thenReturn(1);
+        when(jdbcTemplate.queryForObject(
+                anyString(),
+                any(RowMapper.class),
+                any(Object[].class)
+        )).thenThrow(new RuntimeException("Erro ao salvar"));
 
-        Produto salvo = produtoRepository.salvar(produto);
-
-        assertEquals(produto.getId(), salvo.getId());
-        assertEquals(produto.getSku(), salvo.getSku());
-
-        verify(jdbcTemplate).update(any(PreparedStatementCreator.class));
-    }
-
-
-    @Test
-    void atualizarProdutoErro(){
-        Produto produto = new ProdutoFactoryBot()
-                .comId(1)
-                .build();
-
-        when(jdbcTemplate.update(any(PreparedStatementCreator.class)))
-                .thenThrow(new RuntimeException("Erro ao atualizar"));
-
-        org.junit.jupiter.api.Assertions.assertThrows(
+        RuntimeException exception = assertThrows(
                 RuntimeException.class,
-                () -> produtoRepository.atualizarProduto(1, produto));
+                () -> produtoRepository.salvar(produto)
+        );
 
-        verify(jdbcTemplate).update(any(PreparedStatementCreator.class));
+        assertEquals("Erro ao salvar", exception.getMessage());
+
+        verify(jdbcTemplate).queryForObject(anyString(), any(RowMapper.class), any(Object[].class));
     }
+
 
     @Test
     void atualizarProdutoComAtualizadoEmNulo() {

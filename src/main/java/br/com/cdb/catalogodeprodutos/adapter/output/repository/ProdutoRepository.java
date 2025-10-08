@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 
 import java.sql.CallableStatement;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.*;
 
 @Component
@@ -39,24 +38,20 @@ public class ProdutoRepository implements ProdutoOutputPort {
 
         var entity = produtoEntityMapper.toEntity(produto);
 
-        jdbcTemplate.update(connection -> {
-            CallableStatement cs = connection.prepareCall(
-                    "CALL pr_create_produto(?, ?, ?, ?, ?, ?, ?, ?)"
-            );
-            cs.setObject(1, produto.getId(), java.sql.Types.INTEGER);
-            cs.setString(2, produto.getSku());
-            cs.setString(3, produto.getNome());
-            cs.setString(4, produto.getDescricao());
-            cs.setBigDecimal(5, produto.getPreco());
-            cs.setObject(6, produto.getQuantidade(), java.sql.Types.INTEGER);
-            cs.setObject(7, produto.getAtivo(), java.sql.Types.BOOLEAN);
-            cs.setObject(8,produto.getCategoria().name(), Types.OTHER);
-            return cs;
-        });
+        ProdutoEntity resultado = jdbcTemplate.queryForObject(
+                "SELECT * FROM inserir_produto_func(?, ?, ?, ?, ?, ?, ?::categoria_enum)",
+                rowMapper,
+                produto.getSku(),
+                produto.getNome(),
+                produto.getDescricao(),
+                produto.getPreco(),
+                produto.getQuantidade(),
+                produto.getAtivo(),
+                produto.getCategoria().name()
+        );
 
-        return produto;
+        return produtoEntityMapper.toDomain(resultado);
     }
-
 
     @Override
     public Produto atualizarProduto(int id, Produto produtoAtualizado) {

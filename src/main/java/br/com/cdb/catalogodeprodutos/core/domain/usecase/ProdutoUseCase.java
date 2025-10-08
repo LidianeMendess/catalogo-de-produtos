@@ -32,7 +32,6 @@ public class ProdutoUseCase implements ProdutoInputPort {
     public Produto createProduto(Produto produto) {
         logger.info("Criando produto id={}", produto.getId());
 
-        validarId(produto.getId());
         validarSku(produto.getSku());
         validarPreco(produto.getPreco());
         validarNome(produto.getNome());
